@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ms-MY">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Suara Jauh - Bercakap dengan Pesan Teks & Suara</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none; /* prevent accidental text selection on buttons */
+    }
+
+    body {
+      background: linear-gradient(145deg, #1a2a3a 0%, #0f1a24 100%);
+      font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, 'Poppins', sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    /* MAIN CHAT CONTAINER */
+    .chat-app {
+      max-width: 1100px;
+      width: 100%;
+      height: 90vh;
+      background: rgba(22, 34, 48, 0.75);
+      backdrop-filter: blur(12px);
+      border-radius: 2rem;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    /* HEADER */
+    .chat-header {
+      background: rgba(10, 20, 28, 0.85);
+      padding: 1rem 1.8rem;
+      border-bottom: 1px solid rgba(72, 187, 255, 0.3);
+      backdrop-filter: blur(4px);
+    }
+
+    .header-title {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #C0F2FF, #6BCBFF);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.3px;
+    }
+
+    .badge {
+      background: #1e3b4a;
+      padding: 5px 12px;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #9fd3ff;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge i {
+      font-style: normal;
+      font-size: 1rem;
+    }
+
+    /* MESSAGES AREA */
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      scroll-behavior: smooth;
+    }
+
+    /* custom scroll */
+    .messages-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .messages-container::-webkit-scrollbar-track {
+      background: #14242e;
+      border-radius: 8px;
+    }
+
+    .messages-container::-webkit-scrollbar-thumb {
+      background: #3c6e8c;
+      border-radius: 8px;
+    }
+
+    /* MESSAGE BUBBLES */
+    .message {
+      display: flex;
+      flex-direction: column;
+      max-width: 75%;
+      animation: fadeSlideUp 0.2s ease-out;
+    }
+
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.remote {
+      align-self: flex-start;
+    }
+
+    .message.local {
+      align-self: flex-end;
+    }
+
+    .bubble {
+      padding: 0.75rem 1rem;
+      border-radius: 1.5rem;
+      background: #2c3e4e;
+      color: #eef4ff;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+    }
+
+    .local .bubble {
+      background: linear-gradient(125deg, #0f6b8c, #0a4e6b);
+      border-bottom-right-radius: 0.35rem;
+      color: white;
+    }
+
+    .remote .bubble {
+      background: #1f313d;
+      border-bottom-left-radius: 0.35rem;
+      border-left: 3px solid #3aa8e0;
+    }
+
+    .message-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 5px;
+      font-size: 0.65rem;
+      color: #86a0b0;
+      padding: 0 6px;
+    }
+
+    .message.local .message-meta {
+      justify-content: flex-end;
+    }
+
+    .voice-icon {
+      font-size: 0.75rem;
+      background: #2d5f7a;
+      border-radius: 20px;
+      padding: 2px 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* typing indicator */
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 0.6rem 1rem;
+      background: #1f313d;
+      width: fit-content;
+      border-radius: 2rem;
+      margin-top: 0.25rem;
+    }
+
+    .typing-indicator span {
+      width: 7px;
+      height: 7px;
+      background: #9bc7e5;
+      border-radius: 50%;
+      animation: pulse 1.2s infinite ease-in-out;
+    }
+
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 60%, 100% { transform: scale(0.8); opacity: 0.4; }
+      30% { transform: scale(1.2); opacity: 1; }
+    }
+
+    /* INPUT AREA */
+    .input-area {
+      background: rgba(12, 22, 30, 0.9);
+      backdrop-filter: blur(8px);
+      padding: 1rem 1.5rem 1.3rem;
+      border-top: 1px solid rgba(72, 187, 255, 0.2);
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .text-input-group {
+      flex: 1;
+      background: #1f2f3a;
+      border-radius: 2rem;
+      padding: 0.3rem 0.8rem;
+      display: flex;
+      align-items: center;
+      border: 1px solid #2f5568;
+      transition: all 0.2s;
+    }
+
+    .text-input-group:focus-within {
+      border-color: #4c9fd8;
+      box-shadow: 0 0 0 2px rgba(76, 159, 216, 0.3);
+    }
+
+    #messageInput {
+      background: transparent;
+      border: none;
+      padding: 0.8rem 0.4rem;
+      font-size: 1rem;
+      color: #f0f9ff;
+      width: 100%;
+      outline: none;
+      font-family: inherit;
+      resize: none;
+      max-height: 100px;
+    }
+
+    #messageInput::placeholder {
+      color: #6f8ea0;
+      font-weight: 400;
+    }
+
+    .btn-icon {
+      background: #2f4f62;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: white;
+      font-size: 1.3rem;
+    }
+
+    .btn-icon:hover {
+      background: #3e6c84;
+      transform: scale(1.02);
+    }
+
+    .btn-send {
+      background: #0f6b8c;
+    }
+
+    .btn-send:hover {
+      background: #1c89ae;
+    }
+
+    .btn-mic {
+      background: #2b4b5e;
+    }
+
+    .btn-mic.recording {
+      background: #c44536;
+      animation: pulseRed 1s infinite;
+      box-shadow: 0 0 0 2px #ff6b5b;
+    }
+
+    @keyframes pulseRed {
+      0% { background: #c44536; }
+      50% { background: #e65c4a; }
+      100% { background: #c44536; }
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .status-voice {
+      font-size: 0.7rem;
+      color: #9fc7e0;
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    button {
+      background: none;
+      border: none;
+    }
+
+    @media (max-width: 580px) {
+      .message {
+        max-width: 88%;
+      }
+      .chat-header {
+        padding: 0.8rem 1.2rem;
+      }
+      .input-area {
+        padding: 0.8rem 1rem;
+      }
+      .btn-icon {
+        width: 42px;
+        height: 42px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="chat-app">
+  <div class="chat-header">
+    <div class="header-title">
+      <h1>🌊 Suara Jauh · jauh tak terpisah</h1>
+      <div class="badge">
+        <i>🎙️</i> <span>teks + suara</span>
+      </div>
+    </div>
+    <p style="font-size: 0.7rem; color: #7e9eb0; margin-top: 6px;">✨ Rakam suara atau taip — mesej sampai serta-merta ✨</p>
+  </div>
+
+  <div class="messages-container" id="messagesContainer">
+    <div class="message remote">
+      <div class="bubble">
+        👋 Hai! Kat sini kita boleh bercakap macam berdepan. Hantar teks atau klik mikrofon untuk mesej suara.
+      </div>
+      <div class="message-meta">
+        <span>🌐 sistem</span>
+        <span>● online</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- typing indicator (hidden by default) -->
+  <div id="typingArea" style="padding: 0 1.5rem;"></div>
+
+  <div class="input-area">
+    <div class="input-wrapper">
+      <div class="text-input-group">
+        <input type="text" id="messageInput" placeholder="Taip pesanan di sini..." autocomplete="off" />
+      </div>
+      <div class="controls-row">
+        <button class="btn-icon btn-mic" id="micBtn" title="Rakam mesej suara">🎤</button>
+        <button class="btn-icon btn-send" id="sendBtn" title="Hantar mesej teks">📨</button>
+      </div>
+    </div>
+    <div id="voiceStatus" class="status-voice">🎙️ Klik mikrofon untuk rakam suara (maks 15 saat)</div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ------------------- DOM elements -------------------
+    const messagesContainer = document.getElementById('messagesContainer');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const micBtn = document.getElementById('micBtn');
+    const voiceStatusDiv = document.getElementById('voiceStatus');
+
+    // state untuk suara
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
+    let recordingStartTime = null;
+    let recordingTimer = null;
+    const MAX_RECORDING_SEC = 15;
+
+    // Helper: auto scroll ke bawah
+    function scrollToBottom() {
+      messagesContainer.scrollTo({
+        top: messagesContainer.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+
+    // ---------- Fungsi untuk menambah mesej (teks atau suara) ----------
+    // Jenis: 'text' atau 'voice'
+    function addMessage(content, type, sender = 'local') {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${sender}`; // 'local' atau 'remote'
+
+      const bubbleDiv = document.createElement('div');
+      bubbleDiv.className = 'bubble';
+
+      // Jika mesej suara, tambahkan ikon pembesar suara
+      if (type === 'voice') {
+        const voiceSpan = document.createElement('span');
+        voiceSpan.innerHTML = '🔊 ';
+        voiceSpan.style.fontSize = '1rem';
+        voiceSpan.style.marginRight = '6px';
+        const textNode = document.createTextNode(content);
+        bubbleDiv.appendChild(voiceSpan);
+        bubbleDiv.appendChild(textNode);
+      } else {
+        bubbleDiv.innerText = content;
+      }
+
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'message-meta';
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      if (type === 'voice') {
+        metaDiv.innerHTML = `<span>🎙️ mesej suara</span><span>${timeStr}</span>`;
+      } else {
+        metaDiv.innerHTML = `<span>✉️ teks</span><span>${timeStr}</span>`;
+      }
+
+      messageDiv.appendChild(bubbleDiv);
+      messageDiv.appendChild(metaDiv);
+      messagesContainer.appendChild(messageDiv);
+      scrollToBottom();
+    }
+
+    // fungsi untuk mensimulasikan "orang jauh" membalas (remote)
+    function simulateRemoteReply(content, type = 'text') {
+      // sedikit kelewatan untuk rasa realistik (0.5 - 1.2s)
+      setTimeout(() => {
+        addMessage(content, type, 'remote');
+      }, 600);
+    }
+
+    // balasan automatik yang mesra berdasarkan mesej pengguna (untuk interaksi hidup)
+    function getAutoResponse(userMessage) {
+      const lowerMsg = userMessage.toLowerCase();
+      if (lowerMsg.includes('hai') || lowerMsg.includes('hello') || lowerMsg.includes('hey')) {
+        return "Hai! Seronok dengar suara/teks awak! Apa khabar? 😊";
+      } else if (lowerMsg.includes('khabar') || lowerMsg.includes('how are you')) {
+        return "Saya ceria! Terima kasih tanya. Awak macam mana? ✨";
+      } else if (lowerMsg.includes('terima kasih') || lowerMsg.includes('thanks')) {
+        return "Sama-sama! Sentiasa di sini untuk bercakap 💙";
+      } else if (lowerMsg.includes('nama')) {
+        return "Nama saya 'Suara Jauh'! Sahabat digital awak 🌟";
+      } else if (lowerMsg.includes('cuaca') || lowerMsg.includes('hujan')) {
+        return "Hmm, di sini mendung tapi hati cerah sebab sembang dengan awak ☁️☀️";
+      } else if (lowerMsg.length > 30) {
+        return "Wah panjang mesej awak! Saya baca dengan teliti. Teruskan berkongsi! 📖";
+      } else {
+        return "Terima kasih untuk mesej itu! Saya dengar dengan penuh perhatian. 🤗 (Klik mikrofon untuk hantar suara juga)";
+      }
+    }
+
+    // hantar mesej teks dari pengguna + dapatkan balasan
+    function sendTextMessage(text) {
+      if (!text.trim()) return false;
+      // trim dan tambah ke ruang chat
+      const cleanText = text.trim();
+      addMessage(cleanText, 'text', 'local');
+      messageInput.value = ''; // clear
+
+      // Dapatkan balasan automatik dari "orang jauh"
+      const reply = getAutoResponse(cleanText);
+      simulateRemoteReply(reply, 'text');
+      return true;
+    }
+
+    // hantar mesej suara (sebagai teks hasil transkripsi sebenar atau fallback)
+    // Sebenarnya untuk voice message kita perlu transkripsi ke teks supaya "orang jauh" faham, 
+    // tetapi kita juga akan menunjukkan mesej suara dengan label 🔊. Namun supaya interaksi dua hala,
+    // kita akan gunakan Web Speech API untuk menukar suara ke teks (speech recognition).
+    // Ini membolehkan pengguna bercakap dan chatbot membalas.
+    // Kita implementasi: rakam -> hantar ke recognition -> dapatkan teks -> add sebagai mesej suara (dengan ikon) -> kemudian balasan otomatik.
+    
+    // Inisiasi speech recognition (Google Webkit)
+    let recognition = null;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let isListening = false;
+
+    // Fungsi untuk rakaman suara menggunakan speech recognition (lebih mesra: tukar terus ke teks)
+    async function startVoiceRecording() {
+      if (!SpeechRecognition) {
+        voiceStatusDiv.innerText = "⚠️ Penyemak imbas tidak menyokong pengecaman suara. Guna Chrome/Edge/Safari.";
+        voiceStatusDiv.style.color = "#ffae70";
+        setTimeout(() => {
+          voiceStatusDiv.style.color = "#9fc7e0";
+          voiceStatusDiv.innerText = "🎙️ Klik mikrofon untuk rakam suara (maks 15 saat)";
+        }, 2500);
+        return;
+      }
+
+      if (isListening) {
+        // jika sudah merakam, batalkan
+        stopVoiceRecording(false);
+        return;
+      }
+
+      try {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ms-MY';  // Bahasa Melayu Malaysia
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = false;
+        
+        // Masa tamat otomatik 12 saat (biar practical)
+        recognition.start();
+        isListening = true;
+        micBtn.classList.add('recording');
+        voiceStatusDiv.innerHTML = "🔴 Merakam ... bercakap sekarang (maks 15 saat automatik stop)";
+        
+        // force stop selepas MAX_RECORDING_SEC saat
+        recordingTimer = setTimeout(() => {
+          if (isListening && recognition) {
+            recognition.stop();
+          }
+        }, MAX_RECORDING_SEC * 1000);
+
+        recognition.onresult = (event) => {
+          const last = event.results.length - 1;
+          const transcript = event.results[last][0].transcript;
+          if (transcript && transcript.trim().length > 0) {
+            const voiceText = transcript.trim();
+            // Papar mesej suara dengan ikon
+            addMessage(voiceText, 'voice', 'local');
+            // Balasan dari remote
+            const reply = getAutoResponse(voiceText);
+            simulateRemoteReply(reply, 'text');
+            voiceStatusDiv.innerHTML = "✅ Mesej suara dihantar!";
+          } else {
+            voiceStatusDiv.innerHTML = "⚠️ Tiada suara dikesan. Cuba lagi.";
+          }
+          stopVoiceRecording(true);
+        };
+
+        recognition.onerror = (event) => {
+          console.error("Speech error: ", event.error);
+          let errorMsg = "";
+          if (event.error === 'no-speech') errorMsg = "Tiada suara dikesan.";
+          else if (event.error === 'audio-capture') errorMsg = "Tiada mikrofon dikesan.";
+          else errorMsg = "Ralat: " + event.error;
+          voiceStatusDiv.innerHTML = `❌ Gagal: ${errorMsg}. Cuba klik mikrofon semula.`;
+          stopVoiceRecording(true);
+        };
+
+        recognition.onend = () => {
+          // sudah tamat secara natural atau force stop
+          if (isListening) {
+            stopVoiceRecording(true);
+          }
+        };
+        
+      } catch (err) {
+        console.error(err);
+        voiceStatusDiv.innerHTML = "❌ Tidak dapat mengakses mikrofon. Pastikan kebenaran diberikan.";
+        stopVoiceRecording(true);
+      }
+    }
+
+    function stopVoiceRecording(resetButton = true) {
+      if (recordingTimer) {
+        clearTimeout(recordingTimer);
+        recordingTimer = null;
+      }
+      if (recognition && isListening) {
+        try {
+          recognition.abort(); // hentikan recognition
+        } catch(e) {}
+        isListening = false;
+      }
+      if (resetButton) {
+        micBtn.classList.remove('recording');
+        if (!voiceStatusDiv.innerText.includes("✅")) {
+          setTimeout(() => {
+            if (voiceStatusDiv.innerText.includes("Merakam") || voiceStatusDiv.innerText.includes("Gagal")) {
+              voiceStatusDiv.innerHTML = "🎙️ Klik mikrofon untuk rakam mesej suara";
+              voiceStatusDiv.style.color = "#9fc7e0";
+            }
+          }, 1500);
+        } else {
+          setTimeout(() => {
+            voiceStatusDiv.innerHTML = "🎙️ Klik mikrofon untuk rakam mesej suara";
+            voiceStatusDiv.style.color = "#9fc7e0";
+          }, 2000);
+        }
+      }
+    }
+
+    // Event listeners
+    sendBtn.addEventListener('click', () => {
+      const rawText = messageInput.value;
+      if (rawText.trim()) {
+        sendTextMessage(rawText);
+      } else {
+        voiceStatusDiv.innerHTML = "📝 Sila taip sesuatu dahulu.";
+        setTimeout(() => {
+          if(voiceStatusDiv.innerText.includes("taip")) voiceStatusDiv.innerHTML = "🎙️ Klik mikrofon untuk rakam mesej suara";
+        }, 1500);
+      }
+    });
+
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (messageInput.value.trim()) {
+          sendTextMessage(messageInput.value);
+        }
+      }
+    });
+
+    micBtn.addEventListener('click', () => {
+      // Jika sedang merakam, hentikan
+      if (isListening) {
+        stopVoiceRecording(true);
+      } else {
+        startVoiceRecording();
+      }
+    });
+
+    // Demo typing effect untuk remote (optional: simulate menaip kadang-kadang)
+    // fungsi untuk menunjukkan "sedang menaip..." sebelum balasan; kita boleh tambah tapi tidak mengganggu.
+    // Saya akan tambah sedikit magic: setiap kali remote reply, kita tunjuk indicator typing.
+    const originalSimulate = simulateRemoteReply;
+    window.simulateRemoteReply = function(content, type) {
+      // Tunjuk typing indicator
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'typing-indicator';
+      typingDiv.id = 'tempTyping';
+      typingDiv.innerHTML = '<span></span><span></span><span></span><span style="font-size:0.7rem; margin-left:8px;">Jauh sedang menaip...</span>';
+      const typingArea = document.getElementById('typingArea');
+      typingArea.appendChild(typingDiv);
+      scrollToBottom();
+      setTimeout(() => {
+        if (document.getElementById('tempTyping')) {
+          document.getElementById('tempTyping').remove();
+        }
+        originalSimulate(content, type);
+      }, 800);
+    };
+    // override
+    simulateRemoteReply = window.simulateRemoteReply;
+    
+    // patch add supaya remote reply guna yang baru
+    window.getAutoResponse = getAutoResponse;
+    window.simulateRemoteReply = simulateRemoteReply;
+    
+    // Also handle fallback untuk mesej awal & pastikan fungsi original tidak patah
+    // replace fungsi lama
+    window.originalAdd = addMessage;
+    // Tambah mesej pada permulaan
+    // Additional: jika pengguna hantar mesej suara dan recognition gagal, kita sudah handle
+    
+    // optional: minta kebenaran mikrofon awal supaya tidak terkejut
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      // pre-minta kebenaran tapi tidak merakam, bagi user rasa selesa
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          stream.getTracks().forEach(track => track.stop());
+          console.log("Microphone permission granted early.");
+        })
+        .catch(err => console.warn("Microphone not allowed, voice may not work:", err));
+    }
+    
+    // sedikit sentuhan: jika tiada sokongan speech recognition, kita boleh fallback kepada 'recorder' tetapi
+    // lebih simple mesej popup
+    if (!SpeechRecognition) {
+      voiceStatusDiv.innerHTML = "⚠️ Penyemak imbas tidak sokong suara ke teks. Gunakan mesej teks sahaja.";
+      micBtn.disabled = true;
+      micBtn.style.opacity = '0.5';
+      micBtn.title = "Tidak disokong dalam pelayar ini";
+    }
+  })();
+</script>
+</body>
+</html>
